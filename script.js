@@ -77,8 +77,6 @@ function buildAllCharts(data) {
 
   width = document.querySelector(".chart_wrapper").clientWidth;
   height = (document.querySelector(".chart_wrapper").clientWidth / 16) * 9;
-  // width = document.body.clientWidth;
-  // height = getHeight();
 
   chartWrapper.selectAll("svg").remove();
 
@@ -111,21 +109,15 @@ function buildAllCharts(data) {
     function getRadius() {
       return [
         width < 599 ? 3 : 5,
-        // height > width
-        //   ? (height - margin.top - margin.bottom) * 0.9
-        //   : (width - margin.left - margin.right) * 0.3,
         width > 1000
-          ? (width - margin.left - margin.right) * 0.3
-          : (height - margin.top - margin.bottom) * 0.9,
+          ? (width - margin.left - margin.right) * 0.4
+          : height - margin.top - margin.bottom,
       ];
-
-      // return height > width
-      //   ? (width - margin.left - margin.right) * 0.4
-      //   : (height - margin.top - margin.bottom) * 0.9;
     }
 
     // All charts
     radiusScale = d3
+      // .scaleSqrt()
       .scaleLinear()
       .domain([0, data.total.budget_2024])
       .range(getRadius());
@@ -202,6 +194,11 @@ function buildAllCharts(data) {
       if (dept.department === "Defence" && height < width) {
         row = 3;
         col = 2;
+      }
+
+      if (dept.department === "Social Security And Welfare" && height < width) {
+        row = 2.7;
+        col = 1;
       }
 
       chart4GridPositions[dept.department] = {
@@ -489,14 +486,14 @@ function buildAllCharts(data) {
         d3
           .forceCollide()
           .strength(1)
-          .radius((d) => radiusScale(d.budget_2024) + 0.2)
+          .radius((d) => radiusScale(d.budget_2024) * 1.5 + 0.2)
           .iterations(3)
       )
       .force(
         "y",
         d3
           .forceY()
-          .strength(2)
+          .strength(6)
           .y((d) => chart1YPositions[chart1ColourAndYScale(d.change)])
       )
       .force("x", null)
@@ -514,7 +511,7 @@ function buildAllCharts(data) {
       .transition()
       .delay((d, i) => i * 3)
       .duration(1000)
-      .attr("r", (d) => radiusScale(d.budget_2024));
+      .attr("r", (d) => radiusScale(d.budget_2024) * 1.5);
   }
 
   function buildChart2() {
@@ -596,6 +593,7 @@ function buildAllCharts(data) {
     bubbleSimulation
       .velocityDecay(0.1) // Friction
       .force("radial", null)
+      .force("bound", null)
       .force(
         "collide",
         d3
@@ -641,6 +639,7 @@ function buildAllCharts(data) {
       .velocityDecay(0.2) // Friction
       .force("radial", null)
       .force("center", null)
+      .force("bound", null)
       .force(
         "collide",
         d3
@@ -716,11 +715,14 @@ function buildAllCharts(data) {
   }
 
   function buildChart1Legend() {
-    const labels = [
-      `Total: $${convertToBillions(data.total.budget_2024)}b`,
-      "Largest cuts",
-      "Largest spend",
-    ];
+    const labels =
+      width < 430
+        ? [``, "Largest cuts", "Largest spend"]
+        : [
+            `Total: $${convertToBillions(data.total.budget_2024)}b`,
+            "Largest cuts",
+            "Largest spend",
+          ];
 
     chart1Legend = svg.append("g").attr("class", "chart1_legend chart_legend");
 
@@ -736,37 +738,35 @@ function buildAllCharts(data) {
       .style("stroke", "#93939f")
       .style("stroke-dasharray", 4);
 
-    // Add lines connecting labels
+    // Add line for the first label
+    if (width > 430) {
+      totalBudgetCircle
+        .append("line")
+        .attr("x1", chart1CenterX - chart1CircleRadius)
+        .attr("x2", chart1CenterX - chart1CircleRadius - 15)
+        .attr("y1", chart1CenterY)
+        .attr("y2", chart1CenterY)
+        .attr("stroke", "#93939f")
+        .style("stroke-dasharray", "2,2");
+    }
+
+    // Add line for the second label
     totalBudgetCircle
-      .selectAll("line")
-      .data(labels)
-      .join("line")
-      .attr("x1", (_, i) =>
-        i === 0 ? chart1CenterX - chart1CircleRadius : chart1CenterX
-      )
-      .attr("x2", (_, i) =>
-        i === 0
-          ? chart1CenterX - chart1CircleRadius - 15
-          : chart1CenterX + chart1CircleRadius
-      )
-      .attr("y1", (_, i) => {
-        if (i === 0) {
-          return chart1CenterY;
-        } else if (i === 1) {
-          return chart1CenterY + chart1CircleRadius;
-        } else {
-          return chart1CenterY - chart1CircleRadius;
-        }
-      })
-      .attr("y2", (_, i) => {
-        if (i === 0) {
-          return chart1CenterY;
-        } else if (i === 1) {
-          return chart1CenterY + chart1CircleRadius;
-        } else {
-          return chart1CenterY - chart1CircleRadius;
-        }
-      })
+      .append("line")
+      .attr("x1", chart1CenterX)
+      .attr("x2", chart1CenterX + chart1CircleRadius)
+      .attr("y1", chart1CenterY + chart1CircleRadius)
+      .attr("y2", chart1CenterY + chart1CircleRadius)
+      .attr("stroke", "#93939f")
+      .style("stroke-dasharray", "2,2");
+
+    // Add line for the third label
+    totalBudgetCircle
+      .append("line")
+      .attr("x1", chart1CenterX)
+      .attr("x2", chart1CenterX + chart1CircleRadius)
+      .attr("y1", chart1CenterY - chart1CircleRadius)
+      .attr("y2", chart1CenterY - chart1CircleRadius)
       .attr("stroke", "#93939f")
       .style("stroke-dasharray", "2,2");
 
@@ -821,7 +821,7 @@ function buildAllCharts(data) {
       .attr("fill", "#787887");
 
     // Adjust gap between title and shapes
-    legendSvg.select(".legendTitle").attr("y", 10);
+    legendSvg.select(".legendTitle").attr("y", width < 599 ? 10 : 0);
 
     // legendSvg.attr("transform", `translate(${0},${80})`);
     legendSvg.attr(
@@ -1038,18 +1038,6 @@ function buildAllCharts(data) {
       .enter()
       .append("text")
       .attr("x", (d) => chart4GridPositions[d.department].x)
-      // .attr("y", (d, i) => {
-      //   // console.log(d.department === "Social Security And Welfare");
-      //   // d.department === "Social Security And Welfare"
-      //   //   ? chart4GridPositions[d.department].y
-      //   //   : chart4GridPositions[d.department].y +
-      //   //     radiusScale(d.budget_2024) +
-      //   //     20;
-
-      //   return (
-      //     chart4GridPositions[d.department].y + radiusScale(d.budget_2024) + 100
-      //   );
-      // })
       .attr("text-anchor", "middle")
       // Removed the .html part for simplicity in this explanation
       .each(function (d) {
