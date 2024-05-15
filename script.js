@@ -1004,7 +1004,7 @@ function buildAllCharts(data) {
         // Return the full transform attribute, including rotation
         return `rotate(25,${x},${y})`;
       })
-      .style("font-size", 8);
+      .style("font-size", width < 599 ? 10 : 12);
 
     chart3Legend
       .append("g")
