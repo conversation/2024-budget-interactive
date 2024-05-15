@@ -1068,7 +1068,7 @@ function buildAllCharts(data) {
           .attr("fill", "#62626a")
           .style("font-weight", "bold");
       })
-      .style("font-size", "10px");
+      .style("font-size", width < 599 ? 10 : 13);
   }
 
   function buildLegends() {
