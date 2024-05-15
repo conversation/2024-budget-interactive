@@ -1,0 +1,15 @@
+type,label,short_label,value,percentGDP,unit,sorting
+individualTotals,Effect of policy,Policy effects,-9509,,m,
+individualTotals,Effect of parameter and other variations,External effects,51,,m,
+allTotals,All receipts,All receipts,7724,,m,
+allTotals,All payments,All payments,17182,,m,
+decisions,Effect of policy on receipts,Due to policy,2215,,m,fiscal
+decisions,Effect of policy on payments,Due to policy,11724,,m,fiscal
+decisions,Effect of parameter and other variations on receipts,Due to external factors,5509,,m,fiscal
+decisions,Effect of parameter and other variations on payments,Due to external factors,5458,,m,fiscal
+decisions,Budget underlying cash balance,Budget balance,-28.286,-1,b,fiscal
+decisions,Net debt,Debt owing,552.500,20,b,fiscal
+GDP,Payments,Outgoing,726.732,26.4,b,
+GDP,Receipts,Incoming,698.446,25.3,b,
+GDP,Budget underlying cash balance,Budget balance,-28.286,-1,b,
+GDP,Gross debt,All debt,934.000,33.9,b,

@@ -1,0 +1,268 @@
+.block_content {
+  margin-inline: auto;
+  width: var(--clamp-base);
+}
+
+.basic_margin {
+  margin-bottom: var(--space--medium);
+}
+
+a {
+  color: var(--neutral-900);
+}
+
+/* -------- Header --------- */
+
+header {
+  padding: var(--space--small) var(--space--base);
+  background-color: var(--neutral-900);
+  width: 100%;
+}
+
+header nav {
+  justify-content: space-between;
+  gap: var(--space--small);
+  align-items: center;
+}
+
+header nav ul {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  gap: var(--space--small);
+}
+
+header nav li {
+  list-style-type: none;
+  font-size: var(--font-size--x-small);
+  display: flex;
+  align-items: center;
+}
+
+header nav li:nth-last-child(2) {
+  margin-left: auto;
+}
+
+.nav_btn {
+  padding: var(--space--small) var(--space--medsmall);
+  text-align: center;
+  text-decoration: none;
+  font-family: var(--font-family--base);
+  font-size: var(--font-size--x-small);
+  transition-property: background-color;
+  transition-duration: var(--transition--base);
+  transition-timing-function: ease-in-out;
+}
+
+.donate_btn {
+  background-color: var(--red-500);
+  color: white;
+  font-weight: var(--font-weight--bold);
+}
+
+.donate_btn:hover {
+  background-color: var(--red-700);
+}
+
+.newsletter_btn {
+  background-color: var(--white);
+  color: black;
+}
+
+.newsletter_btn:hover {
+  background-color: var(--neutral-300);
+  color: black;
+}
+
+.edition {
+  transform: translate(0, 4px);
+  text-wrap: nowrap;
+  padding: 0;
+  margin: 0;
+  color: white;
+  display: block;
+  font-size: var(--font-size--x-small);
+}
+
+.tc_header_logo {
+  width: 100%;
+  max-height: 30px;
+  max-width: 280px;
+  overflow: visible;
+  transform: translate(0, 1px);
+}
+
+.stacked_logo {
+  height: 30px;
+  display: none;
+  width: unset;
+  max-width: unset;
+  transform: none;
+}
+
+/* -------- Disclosure statements ------- */
+
+aside {
+  padding-left: 10vw;
+}
+
+aside > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space--large);
+}
+
+aside h3 {
+  font-size: var(--font-size--base);
+  margin-bottom: 0;
+}
+
+.disclosure_statement {
+  font-size: var(--font-size--small);
+}
+
+.logo {
+  margin: 0 auto;
+  width: clamp(200px, 30%, 600px);
+  display: block;
+}
+
+/* -------- Author bios ------- */
+
+.author_bios_wrapper * {
+  font-size: var(--font-size--x-small);
+}
+
+.author_bios_wrapper {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: 1fr;
+  grid-column-gap: 1rem;
+  grid-row-gap: 0px;
+  position: relative;
+}
+
+.author_bio {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.author_bio > p {
+  width: unset;
+  margin: unset;
+  margin-bottom: 1rem;
+}
+
+.author_bio > div > p > a {
+  font-weight: 900;
+}
+
+.author_bio div {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.author_bio div p {
+  margin: 0;
+  width: unset;
+  padding: unset;
+}
+
+.author_bio img {
+  border-radius: 100vw;
+  width: 50px;
+}
+
+/* -------- Footer  ------- */
+
+footer {
+  background-color: #212121;
+  padding-top: var(--space--medsmall);
+  font-family: Helvetica Neue, sans-setif;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space--medsmall);
+}
+
+.footer_wrapper {
+  background-color: #000;
+  padding: var(--space--medsmall) 0;
+  display: flex;
+  flex-flow: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space--base);
+}
+
+.footer_wrapper * {
+  font-size: var(--font-size--small);
+}
+
+.footer_wrapper nav {
+  display: flex;
+  gap: var(--space--base);
+  margin: 0 auto;
+}
+
+.footer_icon_anchor {
+  height: 30px;
+  display: block;
+  line-height: 0;
+  width: fit-content;
+  margin-inline: auto;
+  position: relative;
+  top: 3px;
+}
+
+.footer_wrapper p {
+  width: fit-content;
+  color: var(--neutral-200);
+  margin: 0 auto;
+}
+
+.footer_wrapper a {
+  text-decoration: none;
+  color: var(--neutral-200);
+  line-height: normal;
+}
+
+.footer_wrapper a:hover {
+  text-decoration: underline;
+}
+
+/* -------- Media queries ------- */
+
+@media only screen and (max-width: 400px) {
+  .edition {
+    display: none;
+  }
+}
+
+@media only screen and (max-width: 599px) {
+  .full_logo {
+    display: none;
+  }
+
+  .stacked_logo {
+    display: block;
+  }
+
+  footer img {
+    width: 75% !important;
+  }
+
+  .disclosure_statement {
+    font-size: var(--font-size--x-small);
+  }
+
+  .author_bios_wrapper {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .footer_wrapper * {
+    font-size: var(--font-size--x-small);
+  }
+}
