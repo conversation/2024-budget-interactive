@@ -169,7 +169,7 @@ h2 {
 }
 
 .chart_wrapper {
-  width: clamp(300px, 95vw, 1400px);
+  width: clamp(300px, 95vw, 900px);
   position: relative;
   border: 1px dashed black;
   aspect-ratio: 16 / 9;
@@ -392,6 +392,6 @@ svg {
 
 @media only screen and (min-width: 1200px) {
   .chart2_annotation {
-    inset: 23% 58%;
+    inset: 18% 55%;
   }
 }
