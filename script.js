@@ -32,11 +32,13 @@ const convertToBillions = (value) => {
   return value / 1000000000;
 };
 
+function generateChange(prev, curr) {
+  return prev === 0 ? null : (curr - prev) / ((curr + prev) / 2);
+}
+
 function buildAllCharts(data) {
   let width, height, margin;
   let bubbles, bubbleSimulation, bars, fiscalBubbleSimulation;
-  // let quants = [-100, -50, -25, 0, 25, 50, 100];
-  let quants = [-0.5, -0.25, -0.1, 0, 0.1, 0.25, 0.5];
   let radiusScale;
   let colourLegend;
   let chart1ColourAndYScale,
@@ -92,12 +94,26 @@ function buildAllCharts(data) {
     .attr("class", "fiscal_bubble_container");
   const barContainer = svg.append("g").attr("class", "bar_container");
 
-  function buildScales() {
+  function buildScales(quants = [-0.5, -0.25, -0.1, 0, 0.1, 0.25, 0.5]) {
     width = document.querySelector(".chart_wrapper").clientWidth;
     height =
       window.innerWidth < 599
         ? document.querySelector(".chart_wrapper").clientHeight
         : (document.querySelector(".chart_wrapper").clientWidth / 16) * 9;
+
+    if (quants[0] < -1) {
+      data.programs.forEach((d) => (d.change = d.budget_2024 - d.budget_2023));
+      data.departments.forEach(
+        (d) => (d.change = d.budget_2024 - d.budget_2023)
+      );
+    } else {
+      data.programs.forEach(
+        (d) => (d.change = generateChange(d.budget_2023, d.budget_2024))
+      );
+      data.departments.forEach(
+        (d) => (d.change = generateChange(d.budget_2023, d.budget_2024))
+      );
+    }
 
     // Create SVG element
     svg.attr("width", width).attr("height", height);
@@ -117,7 +133,6 @@ function buildAllCharts(data) {
 
     // All charts
     radiusScale = d3
-      // .scaleSqrt()
       .scaleLinear()
       .domain([0, data.total.budget_2024])
       .range(getRadius());
@@ -176,8 +191,16 @@ function buildAllCharts(data) {
 
     chart3YScale = d3
       .scaleLinear()
-      .domain(d3.extent(data.programs, (d) => d.change).reverse())
-      .range([margin.top, height - 40]);
+      .domain(
+        d3
+          .extent(
+            quants[0] === -0.5 ? data.programs : data.departments,
+            (d) => d.change
+          )
+          .reverse()
+      )
+      .range([margin.top, height - 40])
+      .nice();
 
     // Chart 4
     let numRows = 4;
@@ -214,7 +237,7 @@ function buildAllCharts(data) {
       d.y = chart1YPositions[chart1ColourAndYScale(d.change)];
     });
 
-    // Define colors using CSS variables or directly in JS
+    // Define colors using CSS variables
     const colourDarkGov = getComputedStyle(document.documentElement)
       .getPropertyValue("--yellow-600")
       .trim();
@@ -235,7 +258,7 @@ function buildAllCharts(data) {
       .attr("id", "gradientPatternGov")
       .attr("width", 10) // Adjust pattern size as needed
       .attr("height", 10)
-      .attr("patternTransform", "rotate(45)") // Rotate pattern to simulate 45deg gradient
+      .attr("patternTransform", "rotate(45)")
       .attr("patternUnits", "userSpaceOnUse");
 
     // First part of the pattern
@@ -248,7 +271,7 @@ function buildAllCharts(data) {
     // Second part of the pattern
     patternGov
       .append("rect")
-      .attr("x", 5) // Positioning it right after the first rectangle
+      .attr("x", 5)
       .attr("width", 5)
       .attr("height", 10)
       .attr("fill", colourLightGov);
@@ -258,9 +281,9 @@ function buildAllCharts(data) {
       .append("defs")
       .append("pattern")
       .attr("id", "gradientPatternExt")
-      .attr("width", 10) // Adjust pattern size as needed
+      .attr("width", 10)
       .attr("height", 10)
-      .attr("patternTransform", "rotate(-45)") // Rotate pattern to simulate 45deg gradient
+      .attr("patternTransform", "rotate(-45)")
       .attr("patternUnits", "userSpaceOnUse");
 
     // First part of the pattern
@@ -273,7 +296,7 @@ function buildAllCharts(data) {
     // Second part of the pattern
     patternExt
       .append("rect")
-      .attr("x", 5) // Positioning it right after the first rectangle
+      .attr("x", 5)
       .attr("width", 5)
       .attr("height", 10)
       .attr("fill", colourLightExt);
@@ -321,6 +344,7 @@ function buildAllCharts(data) {
       .append("circle")
       .attr("class", "bubble")
       .attr("cx", width / 2)
+
       .attr("cy", (d) => chart1YPositions[chart1ColourAndYScale(d.change)])
       .attr("fill", (d) =>
         d.budget_2024 < 0
@@ -335,7 +359,6 @@ function buildAllCharts(data) {
       .attr("stroke-width", 0.5)
       .style("stroke-dasharray", (d) => (d.budget_2024 < 0 ? 2 : 0))
       .on("mouseover", showTooltip)
-      .on("click", () => console.log("test"))
       .on("mousemove", moveTooltip)
       .on("mouseleave", hideTooltip)
       .call(
@@ -379,9 +402,15 @@ function buildAllCharts(data) {
     }
     function generatePopup(d) {
       let colour;
+      let changeTextValue;
 
       if (d.change) {
         colour = hexToRgb(fillColours[chart1ColourAndYScale(d.change)]);
+        if (chart1ColourAndYScale.domain()[6] < 100) {
+          changeTextValue = d.change.toFixed(2) + "%";
+        } else {
+          changeTextValue = "$" + convertToBillions(d.change).toFixed(2) + "b";
+        }
       } else {
         colour = [255, 255, 255];
       }
@@ -410,9 +439,9 @@ function buildAllCharts(data) {
       }
        
 
-        ${
-          d.change ? `<br>Change:  ${d.change ? d.change.toFixed(2) : ""}%` : ""
-        }
+        ${d.change ? `<br>Change:  ${changeTextValue}` : ""}
+
+        
        
       </p>`;
     }
@@ -459,7 +488,6 @@ function buildAllCharts(data) {
   }
 
   function buildSimulation() {
-    // Assuming yScale and radiusScale functions are defined based on your data
     bubbleSimulation = d3
       .forceSimulation(data.programs)
       .alphaDecay(0.1) // Default is 0.0228, lower it to slow the cooling down
@@ -479,7 +507,7 @@ function buildAllCharts(data) {
 
     bubbleSimulation
       .restart()
-      .alpha(0.15)
+      // .alpha(0.15)
       .velocityDecay(0.4) // Friction
       .force(
         "collide",
@@ -493,7 +521,7 @@ function buildAllCharts(data) {
         "y",
         d3
           .forceY()
-          .strength(6)
+          .strength(10)
           .y((d) => chart1YPositions[chart1ColourAndYScale(d.change)])
       )
       .force("x", null)
@@ -502,14 +530,22 @@ function buildAllCharts(data) {
         d3.forceRadial(0, chart1CenterX, chart1CenterY * 1).strength(0.7)
       )
       .on("tick", () => {
-        bubbles // Assuming your nodes are SVG circle elements
-          .attr("cx", (d) => d.x)
-          .attr("cy", (d) => d.y);
+        bubbles.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
       });
 
     bubbles
       .transition()
       .delay((d, i) => i * 3)
+      .attr("fill", (d) =>
+        d.budget_2024 < 0
+          ? "#fff"
+          : fillColours[chart1ColourAndYScale(d.change)]
+      )
+      .attr("stroke", (d) =>
+        d.budget_2024 < 0
+          ? "#000"
+          : strokeColours[chart1ColourAndYScale(d.change)]
+      )
       .duration(1000)
       .attr("r", (d) => radiusScale(d.budget_2024) * 1.5);
   }
@@ -619,14 +655,22 @@ function buildAllCharts(data) {
       )
 
       .on("tick", () => {
-        bubbles // Assuming your nodes are SVG circle elements
-          .attr("cx", (d) => d.x)
-          .attr("cy", (d) => d.y);
+        bubbles.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
       });
 
     bubbles
       .transition()
       .duration(400)
+      .attr("fill", (d) =>
+        d.budget_2024 < 0
+          ? "#fff"
+          : fillColours[chart1ColourAndYScale(d.change)]
+      )
+      .attr("stroke", (d) =>
+        d.budget_2024 < 0
+          ? "#000"
+          : strokeColours[chart1ColourAndYScale(d.change)]
+      )
       .attr("r", width < 599 ? 2.5 : 5);
   }
 
@@ -662,20 +706,26 @@ function buildAllCharts(data) {
           .strength(1.5)
           .x((d) => chart4GridPositions[d.department].x)
       )
-      .on("tick", () =>
-        bubbles // Assuming your nodes are SVG circle elements
-          .attr("cx", (d) => d.x)
-          .attr("cy", (d) => d.y)
-      );
+      .on("tick", () => bubbles.attr("cx", (d) => d.x).attr("cy", (d) => d.y));
 
     bubbles
       .transition()
       .delay((d, i) => i * 2)
+      .attr("fill", (d) =>
+        d.budget_2024 < 0
+          ? "#fff"
+          : fillColours[chart1ColourAndYScale(d.change)]
+      )
+      .attr("stroke", (d) =>
+        d.budget_2024 < 0
+          ? "#000"
+          : strokeColours[chart1ColourAndYScale(d.change)]
+      )
       .duration(700)
       .attr("r", (d) => radiusScale(d.budget_2024));
   }
 
-  function buildColourLegend() {
+  function buildColourLegend(quants = [-0.5, -0.25, -0.1, 0, 0.1, 0.25, 0.5]) {
     colourLegend = svg.append("g").attr("class", "colour_legend");
 
     let linear = d3
@@ -683,15 +733,20 @@ function buildAllCharts(data) {
       .domain(quants)
       .range([...fillColours]);
 
-    const p = Math.max(0, d3.precisionFixed(0.1));
-
     let legendLinear = d3
       .legendColor()
       .shapeWidth(30)
       .cells(quants)
-      .labels((d) => `${d.generatedLabels[d.i]}%`)
+      .labels(
+        (d) =>
+          `${
+            quants[0] === -0.5
+              ? d.generatedLabels[d.i] + "%"
+              : "$" + convertToBillions(d.generatedLabels[d.i]).toFixed(1) + "b"
+          }`
+      )
       .orient("horizontal")
-      .title("Percent change in spending")
+      .title("Change in spending")
       .titleWidth(200)
       .scale(linear);
 
@@ -823,19 +878,12 @@ function buildAllCharts(data) {
     // Adjust gap between title and shapes
     legendSvg.select(".legendTitle").attr("y", width < 599 ? 10 : 0);
 
-    // legendSvg.attr("transform", `translate(${0},${80})`);
     legendSvg.attr(
       "transform",
       `translate(
         ${margin.left}
       ,${height - margin.bottom})`
     );
-    // legendSvg.attr(
-    //   "transform",
-    //   `translate(${
-    //     width / 2 - legendSvg.node().getBoundingClientRect().width / 2
-    //   },${height - margin.bottom})`
-    // );
   }
 
   function buildChart2Legend() {
@@ -843,7 +891,6 @@ function buildAllCharts(data) {
 
     const paymentsCircle = chart2Legend.append("g");
     const paymentsColours = chart2Legend.append("g");
-    // .attr("transform", `translate(0,${height - 100})`);
 
     // draw total budget circle
     paymentsCircle
@@ -1001,15 +1048,26 @@ function buildAllCharts(data) {
         // Calculate the pivot point for rotation
         const x = chart3XScale(d.department);
         const y = height - 30;
-        // Return the full transform attribute, including rotation
         return `rotate(25,${x},${y})`;
       })
       .style("font-size", width < 599 ? 10 : 12);
 
     chart3Legend
       .append("g")
-      .attr("transform", `translate(${margin.left},0)`) // This controls the vertical position of the Axis
-      .call(d3.axisLeft(chart3YScale).tickFormat((d) => `${d}%`));
+      .attr("transform", `translate(${margin.left},0)`)
+      .transition()
+      .duration(300)
+      .call(
+        d3.axisLeft(chart3YScale).tickFormat((d) => {
+          let scaleText;
+          if (chart3YScale.domain()[0] > 100) {
+            scaleText = `$${convertToBillions(d).toFixed(1)}b`;
+          } else {
+            scaleText = `${d.toFixed(1)}%`;
+          }
+          return `${scaleText}`;
+        })
+      );
   }
 
   function buildChart4Legend() {
@@ -1039,17 +1097,12 @@ function buildAllCharts(data) {
       .append("text")
       .attr("x", (d) => chart4GridPositions[d.department].x)
       .attr("text-anchor", "middle")
-      // Removed the .html part for simplicity in this explanation
       .each(function (d) {
-        // Use the `each` method to operate on each individual element
         var text = d3.select(this);
         text
           .append("tspan")
           .attr("x", (d) => chart4GridPositions[d.department].x)
           .attr("y", (d) =>
-            // chart4GridPositions[d.department].y +
-            // radiusScale(d.budget_2024) +
-            // 20
             d.department === "Social Security And Welfare"
               ? chart4GridPositions[d.department].y +
                 radiusScale(d.budget_2024) +
@@ -1071,8 +1124,8 @@ function buildAllCharts(data) {
       .style("font-size", width < 599 ? 10 : 13);
   }
 
-  function buildLegends() {
-    buildColourLegend();
+  function buildLegends(quants) {
+    buildColourLegend(quants);
     buildChart1Legend();
     buildChart2Legend();
     buildChart3Legend();
@@ -1114,12 +1167,10 @@ function buildAllCharts(data) {
     }
   }
 
-  function resize() {
+  function resize(quants = [-0.5, -0.25, -0.1, 0, 0.1, 0.25, 0.5]) {
     width = document.body.clientWidth;
     height = getHeight();
-    // maxHeight -
-    // document.querySelector(".chart_title_container").clientHeight -
-    // document.querySelector(".chart_note").clientHeight;
+    buildScales(quants);
 
     bars
       .attr(
@@ -1132,93 +1183,10 @@ function buildAllCharts(data) {
         Math.abs(chart3YScale(d.change) - chart3YScale(0))
       );
 
-    buildScales();
     d3.selectAll(".chart_legend").remove();
     d3.selectAll(".colour_legend").remove();
-    buildLegends();
-  }
+    buildLegends(quants);
 
-  buildScales();
-  buildSimulation();
-  buildBubbles();
-  buildLegends();
-  buildBars();
-
-  // Build chart 1 on load
-  buildChart1();
-
-  function clearActive() {
-    document
-      .querySelectorAll(".chart_btn")
-      .forEach((btn) => btn.classList.remove("active"));
-  }
-
-  let activeChart = 1;
-
-  const largestDeptChangePercent = data.departments.reduce((prev, current) => {
-    return current.change > prev.change ? current : prev;
-  });
-
-  const largestProgramChangePercent = data.programs.reduce((prev, current) => {
-    return current.change > prev.change ? current : prev;
-  });
-
-  const smallestProgramChangePercent = data.programs.reduce((prev, current) => {
-    return current.change < prev.change ? current : prev;
-  });
-
-  const chartDescription = document.querySelector(".chart_description");
-
-  document.querySelector("#chart1").addEventListener("click", (event) => {
-    // chartDescription.style.minHeight = "0";
-    chartDescription.textContent =
-      "The coloured bubbles here represent the program expenses funded in the 2024-25 budget. The circle size represent the program's budget in billions of dollars and the colour shows the change since last budget.";
-    buildChart1();
-    clearActive();
-    event.target.classList.add("active");
-    activeChart = 1;
-  });
-  document.querySelector("#chart2").addEventListener("click", (event) => {
-    chartDescription.textContent =
-      "This chart shows the overall fiscal outlook for the coming year, including the underlying cash balance - which tells us if we have a 'surplus' or 'defecit'. However, when we look at the payments and receipts we can see what factors played a bigger role. The orange stripes show amounts caused by Government policy (like raising/lowering taxes), the blue stripes are amounts caused by external factors (like iron ore prices skyrocketing).";
-    // Payments are spending, such as buying military equipment, and receipts means they earned money, like individual taxation or earnings from the Future Funt - the underlying cash balance is essentially the receipts minus payments.
-    buildChart2();
-    clearActive();
-    event.target.classList.add("active");
-    activeChart = 2;
-  });
-  document.querySelector("#chart3").addEventListener("click", (event) => {
-    chartDescription.textContent = `The department program cirlces have been reduced and we can now see the breakdown of all the cuts and spends. The bars show how much the entire department is projected to grow or shink in 2024-25. The ${
-      largestProgramChangePercent.short_label
-    } program sees the biggest changes (${largestProgramChangePercent.change.toFixed(
-      2
-    )}%), while outliers such as the ${
-      smallestProgramChangePercent.short_label
-    } program (${smallestProgramChangePercent.change.toFixed(
-      2
-    )}%) skew the totals.`;
-    buildChart3();
-    clearActive();
-    event.target.classList.add("active");
-    activeChart = 3;
-  });
-  document.querySelector("#chart4").addEventListener("click", (event) => {
-    // chartDescription.style.minHeight = "8rem";
-    chartDescription.textContent = `Departmental spending for 2024-25 are shown by the outlined dotted circle. As always, Social welfare is the largest department. A notable change is the ${
-      largestDeptChangePercent.short_label
-    } department, with a boost of $${(
-      (largestDeptChangePercent.budget_2024 -
-        largestDeptChangePercent.budget_2023) /
-      1000000000
-    ).toFixed(2)}b.`;
-    buildChart4();
-    clearActive();
-    event.target.classList.add("active");
-    activeChart = 4;
-  });
-
-  window.addEventListener("resize", () => {
-    resize();
     switch (activeChart) {
       case 1:
         buildChart1();
@@ -1236,6 +1204,165 @@ function buildAllCharts(data) {
       default:
         break;
     }
+  }
+
+  buildScales();
+  buildSimulation();
+  buildBubbles();
+  buildLegends();
+  buildBars();
+
+  // Build chart 1 on load
+  buildChart1();
+
+  function clearActive() {
+    document
+      .querySelectorAll(".chart_btn")
+      .forEach((btn) => btn.classList.remove("active"));
+  }
+
+  function updateLargestSmallestChanges(data) {
+    const largestDeptChangePercent = data.departments.reduce(
+      (prev, current) => {
+        return current.change > prev.change ? current : prev;
+      }
+    );
+
+    const largestProgramChangePercent = data.programs.reduce(
+      (prev, current) => {
+        return current.change > prev.change ? current : prev;
+      }
+    );
+
+    const smallestProgramChangePercent = data.programs.reduce(
+      (prev, current) => {
+        return current.change < prev.change ? current : prev;
+      }
+    );
+
+    return {
+      largestDeptChangePercent,
+      largestProgramChangePercent,
+      smallestProgramChangePercent,
+    };
+  }
+
+  function updateChartDescription(changes) {
+    const {
+      largestDeptChangePercent,
+      largestProgramChangePercent,
+      smallestProgramChangePercent,
+    } = changes;
+
+    const chartDescription = document.querySelector(".chart_description");
+
+    let largeValue;
+    let smallValue;
+
+    if (chart1ColourAndYScale.domain()[0] === -0.5) {
+      largeValue = largestProgramChangePercent.change.toFixed(2) + "%";
+      smallValue = smallestProgramChangePercent.change.toFixed(2) + "%";
+    } else {
+      largeValue =
+        "$" +
+        convertToBillions(largestProgramChangePercent.change).toFixed(2) +
+        "b";
+      smallValue =
+        "$" +
+        convertToBillions(smallestProgramChangePercent.change).toFixed(2) +
+        "b";
+    }
+
+    if (activeChart === 1) {
+      chartDescription.textContent =
+        "The coloured bubbles here represent the program expenses funded in the 2024-25 budget. The circle size represents the program's budget in billions of dollars and the colour shows the change since last budget.";
+    } else if (activeChart === 2) {
+      chartDescription.textContent =
+        "This chart shows the overall fiscal outlook for the coming year, including the underlying cash balance - which tells us if we have a 'surplus' or 'deficit'. However, when we look at the payments and receipts we can see what factors played a bigger role. The orange stripes show amounts caused by Government policy (like raising/lowering taxes), the blue stripes are amounts caused by external factors (like iron ore prices skyrocketing).";
+    } else if (activeChart === 3) {
+      chartDescription.textContent = `The department program circles have been reduced and we can now see the breakdown of all the cuts and spends. The bars show how much the entire department is projected to grow or shrink in 2024-25. The ${
+        largestProgramChangePercent.short_label
+      } program sees the biggest ${
+        largeValue.includes("%") ? "relative" : "cash"
+      } boost (${largeValue}), with ${
+        smallestProgramChangePercent.short_label
+      } program (${smallValue}) the biggest cut.`;
+    } else if (activeChart === 4) {
+      chartDescription.textContent = `Departmental spending for 2024-25 are shown by the outlined dotted circle. As always, Social welfare is the largest department. A notable ${
+        largeValue.includes("%") ? "relative" : "cash"
+      } change is the ${
+        largestDeptChangePercent.short_label
+      } department, with a boost of $${(
+        (largestDeptChangePercent.budget_2024 -
+          largestDeptChangePercent.budget_2023) /
+        1000000000
+      ).toFixed(2)}b.`;
+    }
+  }
+
+  function changeQuants(domain) {
+    resize(domain);
+    // Update the largest and smallest changes after changing the domain
+    const updatedChanges = updateLargestSmallestChanges(data);
+    updateChartDescription(updatedChanges);
+  }
+
+  let activeChart = 1;
+
+  document.querySelector(".changeQuants").addEventListener("click", (e) => {
+    if (e.target.innerHTML === "Change in %") {
+      changeQuants([-0.5, -0.25, -0.1, 0, 0.1, 0.25, 0.5]);
+      e.target.innerHTML = "Change in $";
+    } else {
+      changeQuants([
+        -2008000000, -1338666666, -669333333, 0, 2276666666.6666665,
+        4553333333.333333, 6830000000,
+      ]);
+      e.target.innerHTML = "Change in %";
+    }
+  });
+
+  document.querySelector("#chart1").addEventListener("click", (event) => {
+    document.querySelector(".changeQuants").classList.add("make_visible");
+    buildChart1();
+    clearActive();
+    event.target.classList.add("active");
+    activeChart = 1;
+    updateChartDescription(updateLargestSmallestChanges(data));
+  });
+
+  document.querySelector("#chart2").addEventListener("click", (event) => {
+    document.querySelector(".changeQuants").classList.remove("make_visible");
+    buildChart2();
+    clearActive();
+    event.target.classList.add("active");
+    activeChart = 2;
+    updateChartDescription(updateLargestSmallestChanges(data));
+  });
+
+  document.querySelector("#chart3").addEventListener("click", (event) => {
+    document.querySelector(".changeQuants").classList.add("make_visible");
+    buildChart3();
+    clearActive();
+    event.target.classList.add("active");
+    activeChart = 3;
+    updateChartDescription(updateLargestSmallestChanges(data));
+  });
+
+  document.querySelector("#chart4").addEventListener("click", (event) => {
+    document.querySelector(".changeQuants").classList.add("make_visible");
+    buildChart4();
+    clearActive();
+    event.target.classList.add("active");
+    activeChart = 4;
+    updateChartDescription(updateLargestSmallestChanges(data));
+  });
+
+  // Initial call to update chart description
+  updateChartDescription(updateLargestSmallestChanges(data));
+
+  window.addEventListener("resize", () => {
+    resize();
   });
 }
 
@@ -1251,10 +1378,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   Promise.all(promises)
     .then(([programs, departments, fiscal, totals]) => {
-      function generateChange(prev, curr) {
-        return prev === 0 ? null : (curr - prev) / ((curr + prev) / 2);
-      }
-
       function convertToBaseValue(el) {
         el.budget_2023 *= 1000000;
         el.budget_2024 *= 1000000;
@@ -1280,6 +1403,5 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log("Error loading files:", error);
     });
 
-  // buildAllCharts();
   new pym.Child({ polling: 10 });
 });

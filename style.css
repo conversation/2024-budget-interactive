@@ -283,9 +283,9 @@ svg {
 }
 
 .make_visible {
-  opacity: 1;
-  visibility: visible;
-  display: block;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
 }
 
 .legendSize .cell {
@@ -326,6 +326,24 @@ svg {
   gap: 4px;
   flex-wrap: wrap;
   justify-content: center;
+}
+
+.changeQuants {
+  display: none;
+  position: absolute;
+  background-color: var(--neutral-200);
+  width: max-content;
+  padding: 4px;
+  left: 4px;
+  top: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  color: black;
+}
+
+.changeQuants:hover {
+  background-color: var(--neutral-400);
+  color: white;
 }
 
 @media only screen and (max-width: 599px) {
