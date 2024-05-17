@@ -344,7 +344,6 @@ function buildAllCharts(data) {
       .append("circle")
       .attr("class", "bubble")
       .attr("cx", width / 2)
-
       .attr("cy", (d) => chart1YPositions[chart1ColourAndYScale(d.change)])
       .attr("fill", (d) =>
         d.budget_2024 < 0
@@ -618,6 +617,7 @@ function buildAllCharts(data) {
   function buildChart3() {
     clearLegends(2);
     bars
+      .attr("fill", (d) => fillColours[chart1ColourAndYScale(d.change)])
       .attr(
         "x",
         (d) => chart3XScale(d.department) - chart3XScale.bandwidth() * 0.5
@@ -857,12 +857,22 @@ function buildAllCharts(data) {
 
     legendSvg.append("g").attr("class", "legendSize");
 
+    // Get the domain and range of the existing radius scale
+    const radiusDomain = radiusScale.domain();
+    const radiusRange = radiusScale.range().map((r) => r * 1.5);
+
+    // Create a new scale with the adjusted range
+    const adjustedRadiusScale = d3
+      .scaleLinear()
+      .domain(radiusDomain)
+      .range(radiusRange);
+
     const legendSize = d3
       .legendSize()
       .title("Amount spent")
       .cells(valuesToShow)
       .labels((d) => `$${convertToBillions(d.generatedLabels[d.i])}b`)
-      .scale(radiusScale)
+      .scale(adjustedRadiusScale)
       .shape("circle")
       .shapePadding(10)
       .labelOffset(20)
