@@ -874,8 +874,8 @@ function buildAllCharts(data) {
       .labels((d) => `$${convertToBillions(d.generatedLabels[d.i])}b`)
       .scale(adjustedRadiusScale)
       .shape("circle")
-      .shapePadding(10)
-      .labelOffset(20)
+      .shapePadding(0)
+      .labelOffset(15)
       .orient("horizontal");
 
     legendSvg.select(".legendSize").call(legendSize);
@@ -886,13 +886,13 @@ function buildAllCharts(data) {
       .attr("fill", "#787887");
 
     // Adjust gap between title and shapes
-    legendSvg.select(".legendTitle").attr("y", width < 599 ? 10 : 0);
+    legendSvg.select(".legendTitle").attr("y", width < 599 ? 0 : -10);
 
     legendSvg.attr(
       "transform",
-      `translate(
+      `translate( 
         ${margin.left}
-      ,${height - margin.bottom})`
+      ,${height - margin.bottom - (width < 599 ? 0 : 14)})`
     );
   }
 
