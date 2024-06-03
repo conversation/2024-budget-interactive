@@ -337,7 +337,7 @@ svg {
   padding: 4px;
   left: 4px;
   top: 4px;
-  font-size: 13px;
+  font-size: 12px;
   cursor: pointer;
   color: black;
 }
@@ -390,6 +390,10 @@ svg {
 
   .chart2_annotation {
     inset: 18% 55%;
+  }
+
+  .changeQuants {
+    font-size: 10px;
   }
 }
 
