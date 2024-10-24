@@ -174,7 +174,7 @@ h2 {
   border: 1px dashed black;
   aspect-ratio: 16 / 9;
   margin-inline: auto;
-  max-height: 500px;
+  /* max-height: 500px; */
   margin-bottom: 0.5rem;
   background-color: #fffae550;
 }
@@ -374,7 +374,7 @@ svg {
   }
 
   .chart_wrapper {
-    height: 400px;
+    max-height: 400px;
     /* height: auto; */
     margin: 0;
     width: 100%;
